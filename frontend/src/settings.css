@@ -1,0 +1,118 @@
+.settings-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #dfe5e9;
+  padding-bottom: 12px;
+}
+.settings-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: #576b77;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.settings-tabs button[aria-current="page"] {
+  background: #e2eee9;
+  color: #137859;
+  font-weight: 600;
+}
+.settings-body {
+  min-width: 0;
+}
+.settings-body > h2 {
+  font-size: 19px;
+  margin-bottom: 20px;
+}
+.settings-body h3 {
+  font-size: 15px;
+  margin: 24px 0 16px;
+}
+.settings-form {
+  display: grid;
+  gap: 18px;
+}
+.settings-save {
+  padding-top: 16px;
+  border-top: 1px solid #dfe5e9;
+}
+.settings-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  border: 0;
+  padding: 0;
+}
+.settings-days legend {
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.settings-permissions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.settings-summary {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+  gap: 14px;
+  margin: 12px 0 24px;
+  font-size: 13px;
+}
+.settings-summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.settings-summary dt {
+  color: #647984;
+}
+.settings-logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.settings-logo img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
+.settings-notice-preferences > div {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #dfe5e9;
+}
+.settings-notice-preferences .button-group {
+  flex-wrap: wrap;
+}
+.settings-page .data-table small {
+  display: block;
+}
+@media (max-width: 650px) {
+  .settings-tabs button {
+    flex: 1 1 45%;
+    text-align: left;
+  }
+  .settings-summary {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .settings-summary dd {
+    margin-bottom: 10px;
+  }
+  .settings-notice-preferences > div {
+    grid-template-columns: 1fr;
+  }
+  .settings-page input[type="file"] {
+    max-width: 100%;
+  }
+  .settings-page .price-row {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}

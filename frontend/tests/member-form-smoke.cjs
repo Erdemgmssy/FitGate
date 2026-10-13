@@ -1,0 +1,84 @@
+const {chromium}=require('./playwright-runtime.cjs');
+const assert=require('node:assert/strict');
+const path=require('node:path');
+
+(async()=>{
+  const {email,password}=require('./smoke-credentials.cjs').configuredCredentials();
+  const browser=await chromium.launch({channel:'msedge',headless:true});
+  try {
+    const context=await browser.newContext({viewport:{width:1440,height:1000}});
+    const page=await context.newPage();
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    // All mutations go to the isolated PostgreSQL test database, not live FitGate.
+    await page.route('**/api/v1/**',async route=>{
+      const response=await route.fetch({url:route.request().url().replace('127.0.0.1:5174','127.0.0.1:8002')});
+      await route.fulfill({response});
+    });
+    await page.goto('http://127.0.0.1:5174/');
+    await page.locator('input[name=email]').fill(email);
+    await page.locator('input[name=password]').fill(password);
+    await page.locator('button[type=submit]').click();
+    await page.locator('.sidebar').waitFor();
+    await page.locator('.sidebar button[title="Üye yönetimi"]').click();
+    await page.getByLabel('Üye ara').fill('No matching member');
+    await page.getByRole('button',{name:'Yeni üye',exact:true}).click();
+    let dialog=page.getByRole('dialog');
+    assert.equal(await dialog.locator('select[name=planId]').inputValue(),'');
+    assert.equal(await dialog.locator('input[name=start]').count(),0);
+    assert.equal(await dialog.locator('input[name=birthDate]').getAttribute('required'),null);
+    await dialog.locator('input[name=name]').fill('Registration Browser Test');
+    const telephone='05'+String(Date.now()).slice(-9);
+    await dialog.locator('input[name=phone]').fill(telephone);
+    await dialog.locator('input[name=email]').fill(email);
+    await dialog.locator('input[name=birthDate]').fill('1995-05-10');
+    await dialog.locator('input[name=emergency]').fill('Emergency Contact');
+    await dialog.locator('input[name=emergencyPhone]').fill('05552223344');
+    await dialog.locator('textarea[name=note]').fill('Optional registration note');
+    const uid='QA-'+Date.now();
+    await dialog.locator('input[name=uid]').fill(uid);
+    await dialog.locator('input[type=file]').setInputFiles({name:'invalid.txt',mimeType:'text/plain',buffer:Buffer.from('not an image')});
+    assert.equal(await dialog.getByRole('button',{name:'Üyeyi kaydet'}).isDisabled(),true);
+    await dialog.locator('input[type=file]').setInputFiles({name:'member.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jBCEAAAAASUVORK5CYII=','base64')});
+    await dialog.getByAltText('Üye fotoğrafı önizleme').waitFor();
+    await dialog.locator('input[name=consent]').check();
+    await page.screenshot({path:path.resolve('../outputs/member-registration-desktop.png')});
+    await page.setViewportSize({width:390,height:844});
+    await page.waitForTimeout(300);
+    await page.screenshot({path:path.resolve('../outputs/member-registration-mobile.png')});
+    assert.equal(await dialog.evaluate(node=>node.scrollWidth>node.clientWidth+2),false);
+    await dialog.getByRole('button',{name:'Üyeyi kaydet'}).click();
+    await dialog.waitFor({state:'hidden'});
+    await page.locator('.member-detail h2').filter({hasText:'Registration Browser Test'}).waitFor();
+    assert.equal(await page.getByLabel('Üye ara').inputValue(),'');
+    assert.equal(await page.locator('.member-detail .badge').first().innerText(),'Üyelik yok');
+    const state=await page.evaluate(async()=> (await fetch('/api/v1/state/')).json());
+    const member=state.db.members.find(item=>item.phone===telephone);
+    assert.ok(member?.number.startsWith('GYM-'));
+    assert.equal(member.birthDate,'1995-05-10');
+    assert.equal(state.db.subscriptions.filter(item=>item.memberId===member.id).length,0);
+    assert.equal(state.db.cards.find(item=>item.memberId===member.id).uid,uid);
+    await page.reload();
+    await page.waitForTimeout(500);
+    // Verify package controls and duplicate errors without writing a second member.
+    await page.setViewportSize({width:1440,height:1000});
+    await page.locator('.sidebar button[title="Üye yönetimi"]').click();
+    await page.getByRole('button',{name:'Yeni üye',exact:true}).click();
+    dialog=page.getByRole('dialog');
+    const plans=await dialog.locator('select[name=planId] option').evaluateAll(items=>items.map(item=>item.value));
+    await dialog.locator('select[name=planId]').selectOption(plans[1]);
+    assert.equal(await dialog.locator('input[name=start]').count(),1);
+    assert.ok(await dialog.locator('input[name=end]').inputValue());
+    await dialog.locator('input[name=start]').fill('');
+    assert.equal(await dialog.locator('input[name=end]').inputValue(),'');
+    await dialog.locator('select[name=planId]').selectOption('');
+    await dialog.locator('input[name=name]').fill('Duplicate Test');
+    await dialog.locator('input[name=phone]').fill(telephone);
+    await dialog.locator('input[name=consent]').check();
+    await dialog.getByRole('button',{name:'Üyeyi kaydet'}).click();
+    await dialog.getByRole('alert').filter({hasText:'Bu telefonla kayıtlı üye var'}).waitFor();
+    assert.deepEqual(errors,[]);
+    console.log('Member registration UI passed: optional package, details/photo/card persistence, list/detail refresh, duplicate prevention, desktop/mobile. Test database only.');
+    await context.close();
+  } finally {await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});

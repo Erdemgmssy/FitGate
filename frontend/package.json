@@ -1,0 +1,18 @@
+{
+  "scripts": {
+    "test": "node --test tests/gym.test.mjs tests/api-refresh.test.mjs tests/member-registration.test.mjs tests/subscription-rules.test.mjs tests/personnel-rules.test.mjs tests/finance-rules.test.mjs tests/plan-rules.test.mjs tests/class-rules.test.mjs tests/stock-rules.test.mjs tests/report-rules.test.mjs tests/notification-rules.test.mjs tests/security-operations.test.mjs tests/panel-navigation.test.mjs",
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

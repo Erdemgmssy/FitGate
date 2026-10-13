@@ -1,0 +1,87 @@
+# Yerel Demo Verisi
+
+Bu arac uygulama baslangicinda otomatik calismaz. Uretimde yasaktir.
+Yalnizca development ortamindaki `127.0.0.1:5433/fitgate` ve
+`fitgate-postgres` Docker konteyneri desteklenir.
+
+## Korunan Alanlar
+
+- React tasarimi, FastAPI is kurallari, Arduino ve USB Bridge kaynaklari degismez.
+- Tablo yapilari, foreign key/unique/check kisitlari, indeksler ve Alembic surumu korunur.
+- Tum isletme, hesap, oturum ve gecis kayitlari birlikte transaction icinde temizlenir.
+- Gercek fiziksel gecis, sensor olcumu, ziyaret veya otomatik mesai uretilmez.
+- Paket satisi, dondurma, tahsilat, stok, ders ve vardiya icin mevcut servisler kullanilir.
+
+## Yerel Dosyalar
+
+`work/demo-reset/` Git disindadir. Windows izinleri mevcut kullanici ve SYSTEM ile sinirlanir.
+
+- `config.json`: gercek RFID listesi, hedef, COM6 ve tek kullanimlik yerel silme izni.
+- `Giris-Bilgileri.json`: dort hesabin benzersiz, rastgele uretilen gecici parolalari.
+- `before-demo-*.dump.dpapi`: eski kisisel verileri de iceren sifreli geri donus yedegi.
+- `reset-report.json`: temizlenen kayit sayisi ve yeni verilerin finansal dogrulamalari.
+- `Eski-Veri-Dosyalari.json`: eski veri icerebilecek yerel dosyalar ve inceleme adaylari.
+- `Eski-USB-Kuyrugu/`: eski olaylar tekrar gonderilmesin diye tasinan kuyruk ve WAL/SHM dosyalari.
+
+DPAPI yedegi bu Windows hesabi ile cozulebilir; tasinabilir/parolali arsiv olarak kabul edilmemelidir.
+Yedekleme bellek uzerinden yapilir; acik metin yeni PostgreSQL dump dosyasi diske yazilmaz.
+Yedek ayri, gecici veritabanina geri yuklenir. Kayit sayilari ve schema dogrulanir;
+gecici geri yukleme veritabani sonrasinda kaldirilir. Eski yedekler onay olmadan silinmez.
+
+Gecici parolalar sohbet, kaynak kod veya test fixture'larina yazilmaz. Ilk giris sonrasi
+Ayarlar uzerinden degistirilmelidir. Mevcut kimlik dogrulama altyapisinda zorunlu ilk-giris
+parola degisimi bulunmadigindan bu arac bunu uygulanmis gibi gostermez.
+
+## Calistirma
+
+Once FitGate uygulamasini ve Bridge'i mevcut durdurma betigiyle kapatin.
+Docker/PostgreSQL acik kalmalidir. Hedef veritabaninda baska baglanti varsa reset engellenir.
+Komutlar `backend` dizininde calistirilir:
+
+```powershell
+# Yalnizca ayri fitgate_demo_seed_test veritabanini kullanir.
+.venv-fastapi/Scripts/python.exe tools/demo_seed.py --test
+
+# SADECE acikca onaylanan ilk yerel sifirlama icin.
+.venv-fastapi/Scripts/python.exe tools/demo_seed.py --reset-local --confirm "RESET LOCAL FITGATE"
+```
+
+Gercek UID'ler kaynak kodda degil yerel `config.json` icinde bulunmalidir.
+Silme icin bu dosyadaki `allowLocalReset` acikca `true` olmalidir; basaridan sonra `false` olur.
+Demo isareti bulunan veritabaninda komut tekrar calistirilirsa kayitlar cogalmaz ve silinmez.
+Eszamanli tekrar icin transaction kilidi ve ikinci isaret kontrolu bulunur.
+`fitgate_demo_seed_test` de demo isaretinden sonra yeniden uretilmez.
+
+Uygulamayi yeniden acarken Arduino testine hazir olana kadar yalnizca backend/frontend
+servislerini baslatin. Bridge kaynaklari ve mevcut yerel cihaz anahtari degistirilmez;
+cihaz kaydindaki anahtar hash'i mevcut yerel anahtarla eslestirilir.
+Beklenen firmware bilgisi telemetri yerine gecmez: gercek surum/bilesen durumu baglaninca okunur.
+
+## Dogrulama
+
+```powershell
+# backend
+.venv-fastapi/Scripts/python.exe tools/test_fastapi.py -k DemoSeedTests
+
+# frontend; mevcut yerel demo uzerinde sadece giris/okuma ve ekran kontrolu
+node tests/demo-seed-smoke.cjs
+```
+
+Demo kontrolu hesaplari dosyadan okur; parolalari yazdirmaz. Test kaynaklarindaki UID'ler
+tamamen sentetiktir. Screenshot dosyalari `outputs/` icindedir ve Git disindadir.
+
+## Kart Test Senaryolari
+
+- Demo Uye 01: aktif aylik sinirsiz; gercek giris yetkisi icin uygun.
+- Demo Uye 02: aktif 10 seans; seans ancak gercek fiziksel girisle azalir.
+- Demo Uye 03: suresi bitmis; giris reddi beklenir.
+- Demo Uye 04: dondurulmus; giris reddi beklenir.
+- Demo Resepsiyon, Demo Antrenor, Demo Salon Personeli: kendi personel profiline bagli kart.
+
+Bu veriler donanim testi yapildigi anlamina gelmez. Personel otomatik mesaisi icin onayli
+fiziksel gecis yaninda aktif vardiya da gerekir. Demo vardiyalari bugun ve sonraki iki gun
+08:00-18:00 araligindadir. Uygun saat/plan yoksa mesai baslamamasi dogru davranistir.
+
+Kurgusal telefonlar, NANPA'nin calismayan 555-0100..0199 araligindan secilir;
+mevcut telefon dogrulamasi gevsetilmez: https://www.nanpa.com/numbering/555-line-numbers
+E-postalar `example.com` alanindadir; bu kisiler icin SMS/e-posta gonderilmemelidir.
