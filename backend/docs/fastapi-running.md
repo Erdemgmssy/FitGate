@@ -29,6 +29,5 @@ Demo reset normal baslangicta calismaz. Firmware 7 test prototipidir;
 aktarma aracidir; Django runtime gerektirmez. Otomatik baslangicta cagrilmaz.
 Eski kurulumdan aktarim gerekiyorsa once yedek, ayri deneme ortami ve acik onay gerekir.
 
-Testler ayri `fitgate_fastapi_test` veritabanini kullanir. Canli veritabaninda
-fixture veya reset calistirmayin. Bu temiz kopyayi hazirlarken Docker ve canli
-veritabanina migration uygulanmamistir.
+Testler ayri `fitgate_fastapi_test` veritabanini yeniden olusturur. Bu veritabanina
+gercek kayit koymayin; canli veritabaninda fixture veya reset calistirmayin.

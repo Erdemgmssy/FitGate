@@ -16,7 +16,7 @@ Docker Desktop Linux konteyner motorunu, Git'i ve npm'i hazır edin.
 | FastAPI | `127.0.0.1:8001` | `start-backend.ps1` |
 | API proxy | `http://127.0.0.1:8001` | `frontend/vite.config.mjs` |
 | PostgreSQL | `127.0.0.1:5433` → konteyner 5432 | `.env.fastapi` / ilk kurulum aracı |
-| Arduino | Bu bilgisayarda COM6, 115200 baud | yerel `backend/hardware/.env` |
+| Arduino | Örnek port COM6, 115200 baud; kendi portunuzu doğrulayın | yerel `backend/hardware/.env` |
 
 `FitGate-Launcher.ps1` port parametreleri testler içindir; manuel servis betikleri
 ve Vite proxy günlük kullanımda yukarıdaki portları kullanır. Bir portu değiştirmek
@@ -24,7 +24,8 @@ gerekirse ilgili tüm ayarları birlikte değerlendirin.
 
 ## İlk Kurulum
 
-PRIVATE depoya erişimi olan GitHub hesabıyla, Windows PowerShell'de:
+FitGate deposu PUBLIC'tir; indirmek için GitHub hesabı gerekmez.
+Windows PowerShell'de aşağıdaki komutları çalıştırın:
 
 ```powershell
 git clone https://github.com/Erdemgmssy/FitGate.git
@@ -81,6 +82,8 @@ Tek tıkla başlatıcı yalnızca adı belirli yerel Docker PostgreSQL kurulumun
 harici veritabanı için FastAPI'yi doğrudan çalıştırıp kendi işletim planınızı kullanın.
 
 Yeni admin hesabı `create_admin.py` ile interaktif oluşturulur; varsayılan parola yoktur.
+Araç admin e-posta adresi, ad, en az 12 karakterlik parola ve parola onayını ister.
+Boş veritabanında salon/şube adını da sorar. İlk girişte bu e-posta ve parolayı kullanın.
 Mevcut hesaplar varsa script aynı e-postayla hesabı değiştirmez. Aktif hesap veya
 oturum sıfırlaması kurulum adımı değildir.
 

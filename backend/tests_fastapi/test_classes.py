@@ -53,14 +53,16 @@ class ClassTests(TestCase):
         adjacent=self.create(at=(cls.at+timedelta(hours=1)).isoformat());self.book(adjacent)
 
     def test_leave_and_shift_availability(self):
-        cls=self.create();cls.cancelled=True;cls.save()
+        # Keep the lesson and off-hours shift on the same Istanbul calendar day.
+        at=(timezone.localtime()+timedelta(days=2)).replace(hour=10,minute=0,second=0,microsecond=0).isoformat()
+        cls=self.create(at=at);cls.cancelled=True;cls.save()
         kind=m.LeaveType.objects.create(branch_id=self.branch.id,name='Leave')
         day=timezone.localdate(cls.at)
         m.LeaveRequest.objects.create(branch_id=self.branch.id,employee=self.trainer,type_id=kind.id,start=day,end=day,status='approved',actor=self.admin)
-        with self.assertRaises(RuleError):self.create()
+        with self.assertRaises(RuleError):self.create(at=at)
         m.LeaveRequest.objects.all().update(status='rejected')
         m.PlannedShift.objects.create(branch_id=self.branch.id,employee=self.trainer,start=cls.at+timedelta(hours=3),end=cls.at+timedelta(hours=8),actor=self.admin)
-        with self.assertRaises(RuleError):self.create()
+        with self.assertRaises(RuleError):self.create(at=at)
 
     def test_waitlist_promotion_duplicate_and_deadline(self):
         cls=self.create();first=self.book(cls);waiting=self.book(cls,self.other)

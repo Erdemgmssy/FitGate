@@ -3,8 +3,8 @@
 Aktif backend `app.main:app` ile calisan bagimsiz FastAPI uygulamasidir.
 SQLAlchemy 2 / psycopg ile PostgreSQL kullanir; yeni runtime Django veya SQL Server gerektirmez.
 
-Windows kurulumu, veri tasima, guvenli admin/cihaz olusturma ve test komutlari:
-`docs/fastapi-running.md`.
+Windows kurulumu ve sorun giderme: [Kurulum](../docs/KURULUM.md).
+API, admin/cihaz kaydi ve test notlari: [Backend rehberi](docs/fastapi-running.md).
 
 Backend klasorunde:
 
@@ -17,5 +17,4 @@ API dokumantasyonu: http://127.0.0.1:8001/docs
 
 `requirements.txt` ve `requirements-fastapi.txt` yeni stack'i belirtir.
 Test edilen tam surumler `requirements-fastapi.lock.txt` dosyasindadir.
-Bu temiz dagitimda eski Django kodu ve SQL Server taslaklari bulunmaz.
-PostgreSQL semasi icin Alembic kullanin; gercek env ve veri arsivleri dagitilmaz.
+PostgreSQL semasi icin Alembic kullanin; gercek env ve veri arsivleri depoya eklenmez.
