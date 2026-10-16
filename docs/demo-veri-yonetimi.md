@@ -1,8 +1,12 @@
 # Yerel Demo Verisi
 
+Bu belge gelistirici ve tarihsel test araclari icindir. Normal kullanici kurulumu
+`FitGate-Kurulum.bat` ile tek akistir; [guncel rehbere](KURULUM.md) bakin.
+
 Bu arac uygulama baslangicinda otomatik calismaz. Uretimde yasaktir.
-Yalnizca development ortamindaki `127.0.0.1:5433/fitgate` ve
-`fitgate-postgres` Docker konteyneri desteklenir.
+Asagidaki eski reset araci yalnizca development ortamindaki
+`127.0.0.1:5433/fitgate` ve `fitgate-postgres` Docker konteynerini destekler.
+Ayri ve veri silmeyen test yolu icin "Izole PostgreSQL 17.11 demo testi" bolumune bakin.
 
 ## Korunan Alanlar
 
@@ -85,3 +89,46 @@ fiziksel gecis yaninda aktif vardiya da gerekir. Demo vardiyalari bugun ve sonra
 Kurgusal telefonlar, NANPA'nin calismayan 555-0100..0199 araligindan secilir;
 mevcut telefon dogrulamasi gevsetilmez: https://www.nanpa.com/numbering/555-line-numbers
 E-postalar `example.com` alanindadir; bu kisiler icin SMS/e-posta gonderilmemelidir.
+## Izole PostgreSQL 17.11 demo testi
+
+Bu yol mevcut yerel kurulumdan ayridir. `tools/local_postgres.py`,
+`tools/demo_seed.py --reset-local` ve `tools/test_fastapi.py` bu testte kullanilmaz.
+Mevcut `.env.fastapi` degistirilmez; ayarlar yalnizca alt surecin ortaminda verilir.
+
+`FITGATE_ISOLATED_DEMO_TEST=1` secildiginde demo kurucusu yalnizca su hedefi kabul eder:
+
+- Yerel Windows Docker named-pipe baglami; uzak Docker reddedilir.
+- Calisan `/fitgate-demo-test`, yalniz `127.0.0.1:5434:5432` baglantisi.
+- Yalniz `fitgate-demo-test-data` adli Docker volume mount'lari.
+- PostgreSQL, `fitgate` kullanicisi ve `127.0.0.1:5434/fitgate_demo`;
+  URL sorgu parametreleri kabul edilmez.
+- `ENVIRONMENT=development`, `DEMO_MODE=true`.
+
+Backend dizininde, yukaridaki ayarlar ile `DATABASE_URL` ve ayri bir `SECRET_KEY`
+surec ortamina guvenli olarak verildikten sonra:
+
+```powershell
+.venv-fastapi/Scripts/python.exe tools/demo_test.py
+.venv-fastapi/Scripts/python.exe tools/demo_test.py --verify
+```
+
+Ilk komut migration oncesinde SQL sunucusunun sistem kimligini container icindeki
+sunucuyla karsilastirir; surumun 17.11 oldugunu ve kullanici tablolarinin,
+view'larin ve sequence'lerin bulunmadigini denetler. Beklenmeyen veri varsa durur.
+Ardindan Alembic head ve portable demo seed uygulanir. Hicbir reset, truncate,
+drop, container/volume olusturma veya silme komutu yoktur. Dolu veritabaninda ilk
+komut tekrar calistirilmaz; `--verify` mevcut demo verisini denetler ve seed'in
+tekrar cagrildiginda hicbir tabloyu degistirmedigini karsilastirir.
+
+Test sunuculari icin backend `127.0.0.1:8014`, frontend `127.0.0.1:5184`
+kullanilir. Backend `ALLOWED_ORIGINS` bu adresleri icermeli; frontend surecinde
+`FITGATE_API_PROXY=http://127.0.0.1:8014` verilmelidir. Vite `--strictPort`
+ile baslatilir. Donanim simulasyon bayraklari kapali tutulur.
+
+Frontend dizininde `node tests/isolated-demo-smoke.cjs` altisi da olmak uzere
+demo hesaplarinin API/form girislerini, rol kapsamini, admin ekranlarini,
+oturumun yenilemeden sonra korunmasini ve mobil gorunumu denetler.
+Raporlar ve ekran goruntuleri Git disindaki `work/isolated-demo/` altindadir.
+Tum demo hesaplarinin parolasi `FitGateDemo2026!`; admin `admin@fitgate.demo`,
+calisanlar `personel1@fitgate.demo` ... `personel5@fitgate.demo` adresleridir.
+`personel2` antrenordur. Test bitince container, volume ve demo verisi korunur.

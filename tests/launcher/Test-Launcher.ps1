@@ -7,6 +7,13 @@ $fixture = Join-Path $root ('work\fitgate-launcher-tests\FitGate QA space ' + [g
 Copy-Item -LiteralPath (Join-Path $root 'FitGate-Launcher.ps1') -Destination $fixture
 Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'fixtures') -File | Copy-Item -Destination $fixture
 $helper = Join-Path $fixture 'FitGate-Launcher.ps1'
+# Replace Docker access in the fixture copy before any launcher process starts.
+$source = [IO.File]::ReadAllText($helper)
+$dockerStart = $source.IndexOf('function Invoke-Docker(')
+$dockerEnd = $source.IndexOf('function Wait-Postgres')
+if ($dockerStart -lt 0 -or $dockerEnd -le $dockerStart) { throw 'Cannot isolate Docker access; no launcher test was started.' }
+$stub = [IO.File]::ReadAllText((Join-Path $fixture 'docker-stub.ps1'))
+[IO.File]::WriteAllText($helper, $source.Substring(0, $dockerStart) + $stub + "`r`n" + $source.Substring($dockerEnd))
 $sentinel = Start-Process -FilePath $env:FITGATE_LAUNCHER_TEST_PYTHON -ArgumentList '-c "import time; time.sleep(300)"' -WindowStyle Hidden -PassThru
 $unrelated = $null; $unrelatedChildren = @()
 

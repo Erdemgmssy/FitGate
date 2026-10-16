@@ -199,7 +199,13 @@ def credentials():
              'password': 'Fg9!' + secrets.token_urlsafe(24)} for key, name, role in names]
 
 
-def seed(config, accounts, device_key, device_code):
+def seed(config, accounts, device_key, device_code, *, portable=False):
+    from tools.install_demo import DEMO_PASSWORD, guard as demo_guard
+    if portable:
+        demo_guard(engine.url)
+    if any(account['password'] == DEMO_PASSWORD for account in accounts):
+        if not portable:
+            raise RuntimeError('Public demo credentials require the portable demo installer')
     branch = m.Branch.objects.create(name='FitGate Kurgusal Demo', capacity=100, debt_block=False)
     admin_data = accounts[0]
     admin = m.User.objects.create(branch=branch, username=admin_data['email'], email=admin_data['email'],
@@ -208,7 +214,7 @@ def seed(config, accounts, device_key, device_code):
         return execute(action, payload, actor, uuid.uuid4())['result']
     act('openCash', {'amount': '0'})
     employees = []
-    jobs = ['Resepsiyon', 'Antrenor', 'Salon destek']
+    jobs = ['Resepsiyon', 'Antrenor', 'Salon destek', 'Satis', 'Destek']
     for index, account in enumerate(accounts[1:]):
         key = act('saveEmployee', {'name': account['name'], 'role': account['role'], 'email': account['email'],
                   'createAccount': True, 'password': account['password'], 'jobTitle': jobs[index],
@@ -231,7 +237,7 @@ def seed(config, accounts, device_key, device_code):
                      'lessonTypes': ['group', 'private'], 'active': True})
         plans.append(m.Plan.objects.get(pk=result['id']))
     members = []
-    for index in range(24):
+    for index in range(20 if portable else 24):
         # NANPA reserves 555-0100..0199 as non-working fictional numbers.
         name = f'Demo Uye {index+1:02d}'
         plan = plans[0] if index == 0 or index == 2 else plans[3] if index == 1 else plans[1] if index == 3 else plans[index % 5]
@@ -287,6 +293,19 @@ def seed(config, accounts, device_key, device_code):
             'kind': 'private' if index == 3 else 'group', 'requireMembership': True, 'requireLesson': False})['id']
         for member in members[:2] if index < 3 else members[:1]:
             act('book', {'classId': key, 'memberId': str(member.id)})
+    if portable:
+        for employee in employees:
+            begin = tz.make_aware(datetime.combine(today-timedelta(days=1), time(8)))
+            shift = m.Shift.objects.create(branch=branch, employee=employee, entry=begin,
+                exit=begin+timedelta(hours=8), source='simulation', simulated=True,
+                reason='Kurgusal demo mesaisi; fiziksel gecis degildir.')
+            for direction, at in [('entry', begin), ('exit', shift.exit)]:
+                m.AttendanceEvent.objects.create(branch_id=branch.id, employee_id=employee.id,
+                    shift_id=shift.id, occurred_at=at, direction=direction, source='simulation',
+                    actor=admin, approved=True, message='Kurgusal demo mesaisi')
+        branch.configuration = {**branch.configuration, 'portableDemoSeed': 'v1'}
+        branch.save()
+        return {'members': m.Member.objects.count(), 'employees': m.Employee.objects.count()}
     m.Device.objects.create(branch=branch, code=device_code, name='Arduino UNO USB Turnike',
         model='Arduino UNO / RC522 / 2 HC-SR04', purpose='mixed', credential_context='auto',
         direction='both', mode='auto', sensor='unknown', enabled=True, simulated=False,
