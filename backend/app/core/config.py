@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     secret_key: str = Field(min_length=48)
     environment: str = 'development'
     allowed_origins: str = 'http://127.0.0.1:5174,http://localhost:5174,http://127.0.0.1:8001,http://localhost:8001'
+    demo_mode: bool = False
     allow_device_simulation: bool = False
     allow_single_sensor_prototype: bool = False
     single_sensor_prototype_device_code: str = ''

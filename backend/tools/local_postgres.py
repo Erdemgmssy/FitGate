@@ -30,14 +30,19 @@ def preflight(root):
             raise SystemExit('Could not verify Docker resources; no configuration was written.')
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--demo', action='store_true')
+    args = parser.parse_args()
     preflight(ROOT)
+    database = 'fitgate_demo' if args.demo else 'fitgate'
     env=ROOT/'.env.fastapi';docker_env=ROOT/'backups/postgres-docker.env'
     password=secrets.token_urlsafe(32)
     docker_env.parent.mkdir(exist_ok=True)
     with docker_env.open('x',encoding='utf-8') as handle:
-        handle.write(f'POSTGRES_USER=fitgate\nPOSTGRES_PASSWORD={password}\nPOSTGRES_DB=fitgate\n')
+        handle.write(f'POSTGRES_USER=fitgate\nPOSTGRES_PASSWORD={password}\nPOSTGRES_DB={database}\n')
     with env.open('x',encoding='utf-8') as handle:
-        handle.write(f'DATABASE_URL=postgresql+psycopg://fitgate:{password}@127.0.0.1:5433/fitgate\nSECRET_KEY={secrets.token_urlsafe(64)}\nENVIRONMENT=development\nALLOW_DEVICE_SIMULATION=false\nALLOW_SINGLE_SENSOR_PROTOTYPE=false\nSINGLE_SENSOR_PROTOTYPE_DEVICE_CODE=\n')
+        handle.write(f'DATABASE_URL=postgresql+psycopg://fitgate:{password}@127.0.0.1:5433/{database}\nSECRET_KEY={secrets.token_urlsafe(64)}\nENVIRONMENT=development\nDEMO_MODE={str(args.demo).lower()}\nALLOW_DEVICE_SIMULATION=false\nALLOW_SINGLE_SENSOR_PROTOTYPE=false\nSINGLE_SENSOR_PROTOTYPE_DEVICE_CODE=\n')
     subprocess.run(['docker','run','--detach','--name','fitgate-postgres','--env-file',str(docker_env),'-p','127.0.0.1:5433:5432','--mount','type=volume,source=fitgate-postgres-data,target=/var/lib/postgresql/data','postgres:17'],check=True)
     for _ in range(60):
         ready=subprocess.run(['docker','exec','fitgate-postgres','pg_isready','-q'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=5)

@@ -77,3 +77,43 @@ işletme kullanımına ilişkin gereklilikleri yerine getirdiğiniz anlamına ge
 - [Backend kullanım notları](backend/README.md)
 - [Arduino tek sensör prototipi](docs/tek-sensor-prototip-testi.md)
 - [Manuel giriş-çıkış ve mesai](docs/manuel-isletim-modu.md)
+## Otomatik boş veya demo kurulum
+
+Windows'ta Docker Desktop Linux motorunu açıp `FitGate-Kurulum.bat` çalıştırın.
+Kurulum gereksinimleri ve kilitli bağımlılıkları kontrol eder, PostgreSQL 17 ve
+Alembic şemasını hazırlar. Boş kurulum veya **20 üyeli, 5 personelli demo**
+seçebilirsiniz. Demo seçimi aşağıdaki yerel test hesaplarını oluşturur.
+Ardından `FitGate-Baslat.bat` kullanın.
+
+Mevcut yapılandırma, container veya volume varsa kurulum durur; bunları silmez,
+sıfırlamaz veya demo verisi eklemez. Demo yalnızca yeni ve boş `fitgate_demo`
+veritabanına yüklenir. Gerçek veritabanından dump alınmaz.
+Ayrıntılar: [Windows kurulumu](docs/KURULUM.md).
+
+## Demo Giriş Bilgileri
+
+Yeni ve verisiz kurulumda `FitGate-Kurulum.bat` çalıştırıp **2 – Demo** seçin.
+`FitGate-Baslat.bat` ile başlatıp http://127.0.0.1:5174 adresini açın.
+Yönetim ekranları için admin, çalışan ekranları için personel hesabıyla giriş yapın.
+
+| Rol | E-posta | Şifre |
+| --- | --- | --- |
+| Admin | admin@fitgate.demo | FitGateDemo2026! |
+| Çalışan 1 | personel1@fitgate.demo | FitGateDemo2026! |
+| Çalışan 2 (Antrenör) | personel2@fitgate.demo | FitGateDemo2026! |
+| Çalışan 3 | personel3@fitgate.demo | FitGateDemo2026! |
+| Çalışan 4 | personel4@fitgate.demo | FitGateDemo2026! |
+| Çalışan 5 | personel5@fitgate.demo | FitGateDemo2026! |
+
+**Bu herkese açık şifreler yalnızca yerel geliştirme ve test içindir; üretimde kullanılmaz.**
+Demo modu varsayılan olarak kapalıdır. Demo seçimi `DEMO_MODE=true` yazar.
+Seed yalnızca `ENVIRONMENT=development`, yerel `127.0.0.1:5433/fitgate_demo`
+ve yalnızca loopback'e bağlı PostgreSQL konteyneriyle çalışır. Gerçek `fitgate`
+veritabanına demo hesapları eklenmez; mevcut kurulum varsa araç durur.
+Şifreler mevcut Argon2 sistemiyle hash'lenir. Tekrar seed hesapları çoğaltmaz.
+
+Manuel demo kurulumu için backend dizininde yeni kurulumda
+`python tools/local_postgres.py --demo`, `python -m alembic upgrade head`, ardından
+`python tools/install_demo.py --local-demo-accounts` kullanılır.
+`--local-demo-accounts` verilmezse demo kurucusu parolaları interaktif ister.
+Normal boş kurulumun `tools/create_admin.py` ile parola isteme akışı korunur.

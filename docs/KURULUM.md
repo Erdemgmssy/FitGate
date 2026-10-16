@@ -24,6 +24,55 @@ gerekirse ilgili tüm ayarları birlikte değerlendirin.
 
 ## İlk Kurulum
 
+### Otomatik boş veya demo kurulum
+
+Docker Desktop Linux motorunu açıp proje kökünde `FitGate-Kurulum.bat` çalıştırın.
+Betik Python >=3.10, Node 20.19+ / 22.12+ veya daha yeni ana sürüm, npm, Git ve
+yerel Docker Desktop gereksinimlerini kontrol eder; kilitli Python ve React
+bağımlılıklarını yükler. Aşağıdaki manuel adımlar alternatif kurulum yoludur.
+
+- **1 – Boş:** yeni `fitgate` veritabanı, Alembic şeması ve interaktif admin hesabı.
+- **2 – Demo:** yeni `fitgate_demo` veritabanı, Alembic şeması ve sahte kayıtlar.
+
+Her iki seçenek aşağıda açıklanan container, volume ve port adlarını kullanır.
+Mevcut `.env.fastapi`, Docker parola dosyası, container veya volume bulunursa
+kurulum durur; silme, sıfırlama veya üzerine yazma yapmaz. Tekrar çalıştırmak
+mevcut veritabanını migrate etmez. Günlük kullanımda `FitGate-Baslat.bat` kullanın.
+DATABASE_URL, SECRET_KEY veya ENVIRONMENT ortam değişkenleri kurulum hedefini
+değiştirebildiği için betik bunlar tanımlıyken de durur.
+
+Demo; 20 üye, 5 personel, 5 paket, farklı durumlarda üyelikler, fatura, taksit,
+ödeme, kasa, tedarikçi, 6 ürün, stok, satış, vardiya, izin, ders ve rezervasyon içerir.
+Geçmiş 5 mesai ve olayları `simulation` olarak işaretlenir; fiziksel geçiş kanıtı
+değildir. Cihaz oluşturulmaz. Kartlar `DEMO-MEMBER-*` ve `DEMO-STAFF-*` biçiminde
+kurgusal etiketlerdir; gerçek RFID kullanılmaz.
+
+Parametresiz demo kurucusunun hesapları `admin.demo@example.com`, `reception.demo@example.com`,
+`trainer.demo@example.com`, `floor.demo@example.com`, `sales.demo@example.com`,
+`support.demo@example.com` adresleridir. Her hesabın parolası kurulum sırasında
+gizli giriş ve onayla alınır (en az 12 karakter); dosyaya yazılmaz. Mevcut Argon2
+hash işlevi ve rol politikaları kullanılır. Varsayılan yönetici parolası yoktur.
+
+Otomatik kurulumda **2 – Demo** seçimi `DEMO_MODE=true` yazar ve
+`install_demo.py --local-demo-accounts` çağırır. Bu açık seçimde kullanılan altı
+hesap ve yalnızca yerel test şifreleri [README](../README.md#demo-giriş-bilgileri)
+bölümündedir. Demo modu varsayılan olarak kapalıdır; üretim ve `fitgate` hedefi
+reddedilir. Boş kurulum admin parolasını istemeye devam eder.
+
+Dağıtım yöntemi **Alembic + seed**'dir; dump gerekmez. Gerçek veritabanından
+otomatik yedek veya veri kopyası alınmaz. `tools/install_demo.py` yalnızca
+development ortamında yerel PostgreSQL `fitgate_demo` hedefini kabul eder.
+Migration sonrası uygulama tablolarının boşluğu kilit altında doğrulanır.
+Veriler tek transaction içinde üretilir; hata geri alınır. Demo işareti varsa
+tekrar çalıştırma kayıt çoğaltmaz veya parolaları değiştirmez. Başka veri varsa durur.
+
+Yarım kalan kurulumda dosya veya volume silmeyin. Hatanın nedenini çözün.
+Yerel bağlantının **kendi yeni kurduğunuz** veritabanına ait olduğunu doğruladıktan
+sonra backend dizininde `python -m alembic upgrade head` ve demo için
+`python tools/install_demo.py`, boş kurulum için `python tools/create_admin.py`
+komutlarını `.venv-fastapi\Scripts\python.exe` ile çalıştırarak tamamlayın.
+Mevcut işletme veritabanında bu tamamlama adımlarını uygulamayın.
+
 FitGate deposu PUBLIC'tir; indirmek için GitHub hesabı gerekmez.
 Windows PowerShell'de aşağıdaki komutları çalıştırın:
 
@@ -151,7 +200,8 @@ dönüşümü ve güvenli hareket alanı zorunludur. Bu doküman firmware yükle
 
 ## Veritabanı ve Yedekleme
 
-Günlük başlangıçta seed/reset çağrılmaz. `demo_seed.py` yalnızca açıkça onaylanan
+Günlük başlangıçta seed/reset çağrılmaz. Yeni demo kurulumu `install_demo.py`
+kullanır. `demo_seed.py` eski, cihaza bağlı araçtır; yalnızca açıkça onaylanan
 yerel test için ayrı bir araçtır; normal kurulumda kullanmayın. PostgreSQL kayıtları
 Alembic ve transaction'larla yönetilir; bu dağıtımdaki Alembic migration'ları
 aktif PostgreSQL şemasının kaynağıdır.
