@@ -2,6 +2,7 @@
 import argparse
 import getpass
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -15,6 +16,14 @@ from tools.demo_seed import seed
 
 
 def guard(url):
+    if settings.local_sample_data:
+        from tools.install_sample import guard_target
+        guard_target(url)
+        return
+    if os.environ.get('FITGATE_ISOLATED_DEMO_TEST') == '1':
+        from tools.demo_test import guard_target
+        guard_target(url)
+        return
     if (not settings.demo_mode or settings.environment != 'development' or url.get_backend_name() != 'postgresql'
             or url.host not in ('127.0.0.1', 'localhost') or url.port != 5433
             or url.database != 'fitgate_demo'):

@@ -5,7 +5,7 @@ function Run-Step([scriptblock]$Command) {
     if ($LASTEXITCODE -ne 0) { throw 'Adim basarisiz; mevcut dosyalar silinmedi. Hata nedenini kontrol edin.' }
 }
 try {
-    foreach ($name in @('DATABASE_URL', 'SECRET_KEY', 'ENVIRONMENT', 'DEMO_MODE')) {
+    foreach ($name in @('DATABASE_URL', 'SECRET_KEY', 'ENVIRONMENT', 'DEMO_MODE', 'LOCAL_SAMPLE_DATA', 'FITGATE_ISOLATED_DEMO_TEST')) {
         if (Test-Path "Env:$name") { throw "Ortam degiskeni $name kurulum ayarlarini gecersiz kilabilir. Temiz terminalde tekrar deneyin." }
     }
     foreach ($tool in @('python.exe', 'node.exe', 'npm.cmd', 'git.exe', 'docker.exe')) {
@@ -18,8 +18,6 @@ try {
         throw 'Mevcut yapilandirma bulundu. Kurulum durdu; FitGate-Baslat.bat kullanin. Eksik kurulum icin docs/KURULUM.md belgesine bakin.'
     }
     Run-Step { python.exe -c "from backend.tools.local_postgres import preflight, ROOT; preflight(ROOT)" }
-    $choice = Read-Host 'Kurulum: 1 = bos, 2 = demo (yeni fitgate_demo veritabani)'
-    if ($choice -notin @('1','2')) { throw 'Gecersiz secim; hicbir kurulum yapilmadi.' }
     if (!(Test-Path backend/.venv-fastapi/Scripts/python.exe)) {
         Run-Step { python.exe -m venv backend/.venv-fastapi }
     }
@@ -29,11 +27,8 @@ try {
     try { Run-Step { npm.cmd ci } } finally { Pop-Location }
     Push-Location backend
     try {
-        if ($choice -eq '2') { Run-Step { & $python tools/local_postgres.py --demo } }
-        else { Run-Step { & $python tools/local_postgres.py } }
-        Run-Step { & $python -m alembic upgrade head }
-        if ($choice -eq '2') { Run-Step { & $python tools/install_demo.py --local-demo-accounts } }
-        else { Run-Step { & $python tools/create_admin.py } }
+        Run-Step { & $python tools/local_postgres.py }
+        Run-Step { & $python tools/install_sample.py }
     } finally { Pop-Location }
     Write-Host 'Kurulum tamamlandi. FitGate-Baslat.bat ile baslatin.'
 } catch { Write-Host "HATA: $($_.Exception.Message)" -ForegroundColor Red; exit 1 }

@@ -24,117 +24,51 @@ gerekirse ilgili tüm ayarları birlikte değerlendirin.
 
 ## İlk Kurulum
 
-### Otomatik boş veya demo kurulum
-
 Docker Desktop Linux motorunu açıp proje kökünde `FitGate-Kurulum.bat` çalıştırın.
-Betik Python >=3.10, Node 20.19+ / 22.12+ veya daha yeni ana sürüm, npm, Git ve
-yerel Docker Desktop gereksinimlerini kontrol eder; kilitli Python ve React
-bağımlılıklarını yükler. Aşağıdaki manuel adımlar alternatif kurulum yoludur.
+Kurulum tek akıştır: kilitli Python/React bağımlılıkları, yeni PostgreSQL 17,
+Alembic şeması ve kurgusal örnek kayıtlar otomatik hazırlanır. Sonra
+`FitGate-Baslat.bat` çalıştırın. [Altı hazır hesap README’dedir](../README.md#hazır-kayıtlar-ve-giriş).
 
-- **1 – Boş:** yeni `fitgate` veritabanı, Alembic şeması ve interaktif admin hesabı.
-- **2 – Demo:** yeni `fitgate_demo` veritabanı, Alembic şeması ve sahte kayıtlar.
+20 üye, 5 personel, 5 paket, farklı üyelik durumları, fatura, taksit, ödeme, kasa,
+tedarikçi, 6 ürün, stok, satış, planlı vardiya, izin, ders ve rezervasyon yüklenir.
+Beş geçmiş mesai simülasyondur. Fiziksel cihaz oluşturulmaz; kart etiketleri
+`DEMO-MEMBER-*` ve `DEMO-STAFF-*` biçiminde kurgusaldır.
 
-Her iki seçenek aşağıda açıklanan container, volume ve port adlarını kullanır.
-Mevcut `.env.fastapi`, Docker parola dosyası, container veya volume bulunursa
-kurulum durur; silme, sıfırlama veya üzerine yazma yapmaz. Tekrar çalıştırmak
-mevcut veritabanını migrate etmez. Günlük kullanımda `FitGate-Baslat.bat` kullanın.
-DATABASE_URL, SECRET_KEY veya ENVIRONMENT ortam değişkenleri kurulum hedefini
-değiştirebildiği için betik bunlar tanımlıyken de durur.
+| Kaynak | Değer |
+|---|---|
+| Container / imaj | `fitgate-postgres` / `postgres:17` |
+| Veritabanı / kullanıcı | `fitgate_local` / `fitgate` |
+| Bağlantı | yalnızca `127.0.0.1:5433:5432` |
+| Volume | `fitgate-postgres-data` → `/var/lib/postgresql/data` |
+| Yerel ayarlar | `backend/.env.fastapi` |
+| Docker parola dosyası | `backend/backups/postgres-docker.env` |
 
-Demo; 20 üye, 5 personel, 5 paket, farklı durumlarda üyelikler, fatura, taksit,
-ödeme, kasa, tedarikçi, 6 ürün, stok, satış, vardiya, izin, ders ve rezervasyon içerir.
-Geçmiş 5 mesai ve olayları `simulation` olarak işaretlenir; fiziksel geçiş kanıtı
-değildir. Cihaz oluşturulmaz. Kartlar `DEMO-MEMBER-*` ve `DEMO-STAFF-*` biçiminde
-kurgusal etiketlerdir; gerçek RFID kullanılmaz.
+Veritabanı parolası ve imza anahtarı rastgele oluşturulur; terminale yazdırılmaz.
+Bu dosyaları paylaşmayın. Her bilgisayar kendi veritabanı ve volume’üne sahiptir.
+Alembic + örnek veri üreticisi kullanılır; dağıtım için dump oluşturulmaz.
 
-Parametresiz demo kurucusunun hesapları `admin.demo@example.com`, `reception.demo@example.com`,
-`trainer.demo@example.com`, `floor.demo@example.com`, `sales.demo@example.com`,
-`support.demo@example.com` adresleridir. Her hesabın parolası kurulum sırasında
-gizli giriş ve onayla alınır (en az 12 karakter); dosyaya yazılmaz. Mevcut Argon2
-hash işlevi ve rol politikaları kullanılır. Varsayılan yönetici parolası yoktur.
+Mevcut ayar, parola dosyası, container veya volume varsa **kurulum durur**;
+silme, reset veya üzerine yazma yapılmaz. Günlük kullanımda Başlat dosyasını kullanın.
+Kurulum hedefini değiştirebilecek uygulama ortam değişkenleri varsa da işlem durur.
 
-Otomatik kurulumda **2 – Demo** seçimi `DEMO_MODE=true` yazar ve
-`install_demo.py --local-demo-accounts` çağırır. Bu açık seçimde kullanılan altı
-hesap ve yalnızca yerel test şifreleri [README](../README.md#demo-giriş-bilgileri)
-bölümündedir. Demo modu varsayılan olarak kapalıdır; üretim ve `fitgate` hedefi
-reddedilir. Boş kurulum admin parolasını istemeye devam eder.
+Örnek veri yükleyicisi yalnızca `ENVIRONMENT=development`, `LOCAL_SAMPLE_DATA=true`,
+`127.0.0.1:5433/fitgate_local`, doğru yerel Docker container/volume eşleşmesini
+kabul eder. TCP bağlantısının SQL sistem kimliği container içinden okunanla
+karşılaştırılır. PostgreSQL 17 ve boş veritabanı doğrulanmadan Alembic çalışmaz.
+Ardından veriler tek transaction’da oluşturulur; dolu tablolar değiştirilmez.
+Mevcut `fitgate` ve test amaçlı `fitgate_demo` standart kurucuda reddedilir.
+Üretim ortamında herkese açık hesaplarla kurulum ve örnek veri profiliyle
+uygulama başlangıcı engellenir.
 
-Dağıtım yöntemi **Alembic + seed**'dir; dump gerekmez. Gerçek veritabanından
-otomatik yedek veya veri kopyası alınmaz. `tools/install_demo.py` yalnızca
-development ortamında yerel PostgreSQL `fitgate_demo` hedefini kabul eder.
-Migration sonrası uygulama tablolarının boşluğu kilit altında doğrulanır.
-Veriler tek transaction içinde üretilir; hata geri alınır. Demo işareti varsa
-tekrar çalıştırma kayıt çoğaltmaz veya parolaları değiştirmez. Başka veri varsa durur.
+Yarım kalan kurulumda dosya veya volume silmeyin. Günlüklerden hatayı belirleyin;
+kurulumun tamamını tekrar çalıştırmak mevcut kaynakları değiştirmez. Tamamlama
+adımları hedefin kimliği, migration durumu ve kayıtları incelendikten sonra
+ayrıca planlanmalıdır; mevcut veritabanına genel seed/reset uygulamayın.
 
-Yarım kalan kurulumda dosya veya volume silmeyin. Hatanın nedenini çözün.
-Yerel bağlantının **kendi yeni kurduğunuz** veritabanına ait olduğunu doğruladıktan
-sonra backend dizininde `python -m alembic upgrade head` ve demo için
-`python tools/install_demo.py`, boş kurulum için `python tools/create_admin.py`
-komutlarını `.venv-fastapi\Scripts\python.exe` ile çalıştırarak tamamlayın.
-Mevcut işletme veritabanında bu tamamlama adımlarını uygulamayın.
-
-FitGate deposu PUBLIC'tir; indirmek için GitHub hesabı gerekmez.
-Windows PowerShell'de aşağıdaki komutları çalıştırın:
-
-```powershell
-git clone https://github.com/Erdemgmssy/FitGate.git
-cd FitGate
-cd backend
-python -m venv .venv-fastapi
-.\.venv-fastapi\Scripts\python.exe -m pip install -r requirements-fastapi.lock.txt
-cd ..\frontend
-npm ci
-cd ..
-```
-
-FastAPI kilit dosyası aktif bağımlılıkları ve Excel için `openpyxl`/`et_xmlfile`
-sürümlerini içerir. Django, SQL Server ve ODBC yeni kurulum için gerekmez;
-eski uygulama ve bağımlılık kilidi bu temiz dağıtıma dahil değildir.
-
-Docker Desktop'ı açın; motor hazır olduktan sonra **yalnızca ilk, verisiz kurulumda**:
-
-```powershell
-cd backend
-.\.venv-fastapi\Scripts\python.exe tools/local_postgres.py
-.\.venv-fastapi\Scripts\python.exe -m alembic upgrade head
-.\.venv-fastapi\Scripts\python.exe tools/create_admin.py
-cd ..
-```
-
-`local_postgres.py` yalnızca yerel Windows Docker Desktop bağlamını kabul eder.
-Mevcut `.env.fastapi`, Docker parola dosyası, `fitgate-postgres` konteyneri veya
-`fitgate-postgres-data` volume'ü bulunursa **hiçbir yapılandırmayı yazmadan durur**.
-Bu durumda eski `.env.fastapi` ve veritabanı parolasını güvenli yedekten koruyun;
-mevcut veriyi silerek kurulumu zorlamayın. `.env.fastapi` dosyasını silmek parola sıfırlama yöntemi değildir.
-
-Yeni kurulumda araç rastgele güçlü parola ve imza anahtarı oluşturur:
-
-- `backend/.env.fastapi`: FastAPI bağlantısı ve imza ayarı.
-- `backend/backups/postgres-docker.env`: ilk konteyner oluşturma ayarı.
-- Konteyner: `fitgate-postgres`, imaj: `postgres:17`.
-- Port: yalnızca `127.0.0.1:5433:5432`.
-- Volume: `fitgate-postgres-data`, hedef: `/var/lib/postgresql/data`.
-
-Değerler terminale yazdırılmaz. Bu dosyaları paylaşmayın. Docker parolasını sonradan
-yalnızca env dosyasında değiştirmek mevcut PostgreSQL rolünün parolasını değiştirmez.
-
-### Örnek Env Dosyaları
-
-`.env.fastapi.example` gerçek değer içermez; alanları anlamak için referanstır.
-Otomatik yerel kurulumdan **önce** bunu `.env.fastapi` olarak kopyalamayın;
-kurulum aracı mevcut dosyayı korumak için durur.
-
-Alternatif/önceden hazırlanmış veritabanında örneği `.env.fastapi` olarak kopyalayın,
-bağlantı ve en az 48 karakterlik rastgele `SECRET_KEY` değerini yerel editörde doldurun.
-Parola/secret üretimini veya değerlerini sohbete ve Git'e taşımayın.
-Tek tıkla başlatıcı yalnızca adı belirli yerel Docker PostgreSQL kurulumunu destekler;
-harici veritabanı için FastAPI'yi doğrudan çalıştırıp kendi işletim planınızı kullanın.
-
-Yeni admin hesabı `create_admin.py` ile interaktif oluşturulur; varsayılan parola yoktur.
-Araç admin e-posta adresi, ad, en az 12 karakterlik parola ve parola onayını ister.
-Boş veritabanında salon/şube adını da sorar. İlk girişte bu e-posta ve parolayı kullanın.
-Mevcut hesaplar varsa script aynı e-postayla hesabı değiştirmez. Aktif hesap veya
-oturum sıfırlaması kurulum adımı değildir.
+`.env.fastapi.example` yalnızca alan referansıdır. Otomatik kurulumdan önce
+`.env.fastapi` olarak kopyalamayın. Eski ayarlarınızı yeni örnekle değiştirmeyin.
+`tools/create_admin.py` interaktif ayrı bir bakım aracıdır; standart ilk kurulumun
+parçası değildir.
 
 ## Günlük Başlatma ve Durdurma
 
@@ -200,8 +134,8 @@ dönüşümü ve güvenli hareket alanı zorunludur. Bu doküman firmware yükle
 
 ## Veritabanı ve Yedekleme
 
-Günlük başlangıçta seed/reset çağrılmaz. Yeni demo kurulumu `install_demo.py`
-kullanır. `demo_seed.py` eski, cihaza bağlı araçtır; yalnızca açıkça onaylanan
+Günlük başlangıçta seed/reset çağrılmaz. Standart ilk kurulum `install_sample.py`
+ile Alembic ve örnek verileri hazırlar. `demo_seed.py` eski, cihaza bağlı araçtır; yalnızca açıkça onaylanan
 yerel test için ayrı bir araçtır; normal kurulumda kullanmayın. PostgreSQL kayıtları
 Alembic ve transaction'larla yönetilir; bu dağıtımdaki Alembic migration'ları
 aktif PostgreSQL şemasının kaynağıdır.
@@ -222,7 +156,7 @@ Migration öncesi yedek/geri yükleme planı gerekir; downgrade veri kaybettireb
 Normal kurulum mevcut veriyi sıfırlamamalıdır. `docker volume rm`, `docker rm -v`
 ve silme/reset araçları günlük bakım komutları değildir.
 
-## Testler
+## Geliştirici Testleri
 
 Proje kökünden, canlı üyelerle test işlemi yapmadan:
 
@@ -230,17 +164,27 @@ Proje kökünden, canlı üyelerle test işlemi yapmadan:
 .\backend\.venv-fastapi\Scripts\python.exe -m unittest discover -s tests/security -v
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/launcher/Test-Launcher.ps1
 cd backend
-.\.venv-fastapi\Scripts\python.exe tools/test_fastapi.py
+.\.venv-fastapi\Scripts\python.exe tools/test_fastapi.py --isolated-demo-container
 .\.venv-fastapi\Scripts\python.exe -m unittest discover -s hardware -p test_bridge.py
 cd ..\frontend
 npm test
 npm run build
 ```
 
-`test_fastapi.py` yalnızca ayrı `fitgate_fastapi_test` veritabanını sıfırlar.
+Backend regresyon komutundan önce yalnızca alt sürecin ortamında izole test
+bağlantısını verin: `127.0.0.1:5434/fitgate_demo`, `fitgate` kullanıcısı,
+`FITGATE_ISOLATED_DEMO_TEST=1`, `DEMO_MODE=true`, `LOCAL_SAMPLE_DATA=false`,
+`ENVIRONMENT=development` ve ayrı bir test imza anahtarı. Mevcut `.env.fastapi`
+dosyasını değiştirmeyin. Test container'ı önceden hazırlanmış olmalıdır.
+`test_fastapi.py` artık açık bayrak ve yalnızca `fitgate-demo-test` container'ını
+kabul eder; SQL sistem kimliğini doğrulamadan hiçbir reset çalıştırmaz. Yalnızca
+bu sunucudaki ayrı `fitgate_fastapi_test` veritabanını oluşturur/sıfırlar;
+`fitgate_demo` kayıtlarını korur. Gerçek `fitgate` ve standart `fitgate_local`
+üzerinden çalıştırılması reddedilir. Test veritabanına gerçek kayıt koymayın.
 Bridge birim testleri gerçek COM portu açmaz. Başlatıcı testi ayrı örnek süreçler
-ve 18001/15174/18106 portlarını kullanır; PostgreSQL hazır olmasını kontrol eder,
-canlı iş kaydı yazmaz. Donanım bağlı/bağlı-değil fiziksel adımlar kullanıcıyla ayrıca doğrulanır.
+ve 18001/15174/18106 portlarını kullanır; Docker/PostgreSQL yanıtları geçici test
+kopyasında taklit edilir, gerçek Docker kaynaklarına erişilmez. Donanım
+bağlı/bağlı-değil fiziksel adımlar kullanıcıyla ayrıca doğrulanır.
 
 ## Sorun Giderme
 

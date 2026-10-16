@@ -15,6 +15,11 @@ Backend klasorunde:
 
 API dokumantasyonu: http://127.0.0.1:8001/docs
 
+Ilk kurulum proje kokundeki `FitGate-Kurulum.bat` ile tek akistir: PostgreSQL 17,
+Alembic ve 20 uye / 5 personelli kurgusal kayitlar otomatik hazirlanir.
+Alti yerel ornek hesap [README](../README.md) icindedir. Mevcut ayar, container
+ve volume korunur; uretimde herkese acik hesap kurulumu reddedilir.
+
 `requirements.txt` ve `requirements-fastapi.txt` yeni stack'i belirtir.
 Test edilen tam surumler `requirements-fastapi.lock.txt` dosyasindadir.
 PostgreSQL semasi icin Alembic kullanin; gercek env ve veri arsivleri depoya eklenmez.

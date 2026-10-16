@@ -1,3 +1,5 @@
+> Tarihsel rapor: eski demo/boş kurulum akışını anlatır. Güncel dağıtım ve test sonuçları için [Standart Kurulum Raporu](STANDART-KURULUM-RAPORU.md) geçerlidir.
+
 # Demo kurulum değişiklik raporu
 
 ## GitHub gönderimi öncesi son kontrol — 16 Ekim 2026
